@@ -1,0 +1,8 @@
+CREATE DATABASE IF NOT EXISTS airlinq_user_db;
+CREATE DATABASE IF NOT EXISTS airlinq_airline_db;
+CREATE DATABASE IF NOT EXISTS airlinq_location_db;
+CREATE DATABASE IF NOT EXISTS airlinq_flight_db;
+CREATE DATABASE IF NOT EXISTS airlinq_pricing_db;
+CREATE DATABASE IF NOT EXISTS airlinq_seat_db;
+CREATE DATABASE IF NOT EXISTS airlinq_booking_db;
+CREATE DATABASE IF NOT EXISTS airlinq_payment_db;

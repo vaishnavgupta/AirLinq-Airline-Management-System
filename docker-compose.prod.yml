@@ -1,0 +1,223 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: airlinq-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - airlinq_mysql_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  eureka-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE_PATH: cloud/eureka-server
+    container_name: eureka-server
+    environment:
+      SERVER_PORT: 8761
+      SPRING_APPLICATION_NAME: eureka-server
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE_PATH: cloud/api-gateway
+    container_name: api-gateway
+    depends_on:
+      - eureka-server
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      SPRING_APPLICATION_NAME: api-gateway
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE_PATH: services/user-service
+    container_name: user-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    environment:
+      SERVER_PORT: 5001
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/airlinq_user_db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_EXPIRATION_MS: 86400000
+
+  airline-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE_PATH: services/airline-service
+    container_name: airline-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    environment:
+      SERVER_PORT: 5002
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/airlinq_airline_db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+
+  location-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE_PATH: services/location-service
+    container_name: location-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    environment:
+      SERVER_PORT: 5004
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/airlinq_location_db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+
+  flight-ops-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE_PATH: services/flight-ops-service
+    container_name: flight-ops-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      airline-service:
+        condition: service_started
+      location-service:
+        condition: service_started
+    environment:
+      SERVER_PORT: 5005
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/airlinq_flight_db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+
+  pricing-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE_PATH: services/pricing-service
+    container_name: pricing-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      airline-service:
+        condition: service_started
+      flight-ops-service:
+        condition: service_started
+    environment:
+      SERVER_PORT: 5006
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/airlinq_pricing_db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+
+  seat-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE_PATH: services/seat-service
+    container_name: seat-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      airline-service:
+        condition: service_started
+      flight-ops-service:
+        condition: service_started
+    environment:
+      SERVER_PORT: 5007
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/airlinq_seat_db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+
+  booking-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE_PATH: services/booking-service
+    container_name: booking-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      flight-ops-service:
+        condition: service_started
+      pricing-service:
+        condition: service_started
+      seat-service:
+        condition: service_started
+    environment:
+      SERVER_PORT: 5003
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/airlinq_booking_db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE_PATH: services/payment-service
+    container_name: payment-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      booking-service:
+        condition: service_started
+    environment:
+      SERVER_PORT: 5010
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/airlinq_payment_db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET}
+      RAZORPAY_CURRENCY: INR
+      RAZORPAY_CALLBACK_URL: ${RAZORPAY_CALLBACK_URL}
+
+volumes:
+  airlinq_mysql_data:

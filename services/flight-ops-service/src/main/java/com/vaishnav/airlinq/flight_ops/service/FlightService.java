@@ -1,0 +1,21 @@
+package com.vaishnav.airlinq.flight_ops.service;
+
+import com.vaishnav.enums.FlightStatus;
+import com.vaishnav.payload.request.FlightRequest;
+import com.vaishnav.payload.response.FlightResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+public interface FlightService {
+
+    // Actually ownerId is passed --> get Airline Id (Feign Client) --> then FlightOperations
+    FlightResponse createFlight(Long airlineId, FlightRequest  flightRequest) throws Exception;
+    Page<FlightResponse> getFlightsByAirlineId(Long airlineId,
+                                               Long departureAirportId,
+                                               Long arrivalAirportId,
+                                               Pageable pageable);
+    FlightResponse getFlightById(Long id) throws Exception;
+    FlightResponse updateFlight(Long id, FlightRequest  flightRequest) throws Exception;
+    FlightResponse changeStatus(Long id, FlightStatus flightStatus) throws Exception;
+    void deleteFlight(Long airlineId, Long id) throws Exception;
+}
