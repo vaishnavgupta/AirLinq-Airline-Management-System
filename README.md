@@ -13,6 +13,16 @@ The project is designed to demonstrate production-style backend engineering conc
 
 ---
 
+## Cover Image
+
+<p align="center">
+  <a target="_blank">
+    <img src="https://res.cloudinary.com/db7cahrki/image/upload/v1786184628/ChatGPT_Image_Jul_28_2026_07_01_25_PM_l3yizb.png" alt="AirLinq Cover" width="80%" style="border-radius: 8px"/>
+  </a>
+</p>
+
+---
+
 ## Table Of Contents
 
 - [Project Overview](#project-overview)
